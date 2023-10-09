@@ -90,9 +90,10 @@ def heapify(A, i, n=None):
     if A[i] != truemin:
         if (A[left(i)] == truemin):
             swap(A, i, left(i))
+            return 1
         else:
             swap(A, i, right(i))
-    return
+            return 2
     
 
 
@@ -101,27 +102,27 @@ def buildHeap(A):
     heap. Call heapify on all the internal nodes, starting with
     the last internal node, and working backwards to the root."""
     n = len(A)
-    parentn = parent(n-1)
-    for i in range(parentn, -1, -1):
-        oldroot = A[i]
-        oldleft = A[left(i)]
-        if n > 2*i+2:
-            oldright = A[right(i)]
-        heapify(A, i, n)
-        while (oldroot != A[i] and i <= parent(parentn)):
-            storei = i
-            if oldleft != A[left(i)]:
-                olderleft = A[left(oldleft)]
-                if n > 2*oldleft+2:
-                    olderright = A[right(oldleft)]
-                heapify(A, left(i), n)
-                if olderleft != A[left(oldleft)]:
+    parent_n = parent(n-1)
+    for i in range(parent_n, -1, -1):
+        old_root = A[i]
+        changing_value_identifier = heapify(A, i, n)
+        
+        root_has_changed = old_root != A[i]
+        is_parent_of_parent = i <= parent(parent_n)
 
-            elif oldright != A[right(i)]:
-                heapify(A, right(i), n)
+        next_index = i
+        first_flag = True
 
-
-    return
+        while root_has_changed and is_parent_of_parent:
+            if changing_value_identifier:
+                if first_flag:
+                    next_index = next_index * 2 + changing_value_identifier
+                    first_flag = False
+                changing_value_identifier = heapify(A, next_index, n)
+                if changing_value_identifier:
+                    next_index = next_index * 2 + changing_value_identifier 
+            else:
+                break
 
 
 def heapExtractMin(A):
@@ -131,26 +132,32 @@ def heapExtractMin(A):
     comparisons and swaps (heapify calls and swap calls).
     Your implementation should not perform O(n) (linear) work."""
     newmin = A[0]
+
     if len(A) == 1:
         A.remove(A[0])
         return newmin
+
     swap(A, 0, len(A)-1)
     A.remove(A[len(A)-1])
-    for i in range(len(A)):
-        length = len(A)-1
-        if left(i) > length:
-            return newmin
-        if left(i) == length:
-            trumin = min(i, left(i))
+    
+    jump_to_index = 0
+
+    jump_to_is_valid = jump_to_index <= parent(len(A)-1)
+
+    while jump_to_is_valid:
+        if right(jump_to_index) >= len(A):
+            trumin = min(A[jump_to_index], A[left(jump_to_index)])
         else:
-            trumin = min(i, left(i), right(i))
-        if trumin != A[i]:
-            if trumin == A[left(i)]:
-                heapify(A, i, (i*2+1))
-                i = left(i)
+            trumin = min(A[jump_to_index], A[left(jump_to_index)], A[right(jump_to_index)])
+        if trumin != A[jump_to_index]:
+            if trumin == A[left(jump_to_index)]:
+                heapify(A, jump_to_index)
+                jump_to_index = left(jump_to_index)
+                jump_to_is_valid = jump_to_index <= parent(len(A)-1)
             else:
-                heapify(A, i, (i*2+2))
-                i = right(i)
+                heapify(A, jump_to_index)
+                jump_to_index = right(jump_to_index)
+                jump_to_is_valid = jump_to_index <= parent(len(A)-1)
         else:
             return newmin
 
@@ -163,11 +170,18 @@ def heapInsert(A, v):
     comparisons and swaps (swap calls).
     Your implementation should not perform O(n) (linear) work.
     MAKE SURE you swap elements by calling the swap function defined above."""
-    A.insert(len(A), v)
-    for i in range(len(A)-1, -1, -1):
-        if (A[i] < A[parent(i)]):
-            heapify(A, parent(i))
-            i = parent(i)
+    if v != None:
+        x = int(v)
+    else:
+        return
+    A.append(x)
+    current_index = len(A)-1
+
+    while current_index > 0:
+        parent_index = parent(current_index)
+        if A[current_index] < A[parent_index]:
+            swap(A, parent_index, current_index)
+            current_index = parent_index
         else:
             break
 
@@ -235,6 +249,10 @@ def main():
     if len(sys.argv) > 2:
         db = True
     
+    A = [5, 1, 3, 2, 4]
+    printCompleteTree(A)
+    heapify(A, 0)
+    printCompleteTree(A)
 
     A = shuffled_list(20, 0)
     print("Complete Tree size 20:")
@@ -242,7 +260,10 @@ def main():
     buildHeap(A)
     print("Heap size 20:")
     printCompleteTree(A)
-
+    heapExtractMin(A)
+    printCompleteTree(A)
+    B = heapInsert(A, 8)
+    printCompleteTree(B)
 
     A = shuffled_list(30, 0)
     report_counts_on_basic_ops(A)
